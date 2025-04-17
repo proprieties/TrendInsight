@@ -1,8 +1,5 @@
 # streamlit_trend_insight_app.py
 
-# 예시: 나눔고딕 설치
-# !apt-get install -y fonts-nanum
-
 import streamlit as st
 import pandas as pd
 import requests
@@ -30,38 +27,38 @@ num_articles = st.slider("기사 수 (최대 50)", 5, 50, 10)
 @st.cache_data
 def collect_news_data(query, count=10):
     base_url = f"https://news.google.com/search?q={query}&hl=ko&gl=KR&ceid=KR%3Ako"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-            response = requests.get(base_url, headers=headers)
-                soup = BeautifulSoup(response.text, 'html.parser')
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(base_url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-                    titles = []
-                        for article in soup.select('article')[:count]:
-                                title_tag = article.find('a')
-                                        if title_tag:
-                                                    titles.append(title_tag.text.strip())
-                                                        return pd.DataFrame({'title': titles})
+    titles = []
+    for article in soup.select('article')[:count]:
+        title_tag = article.find('a')
+        if title_tag:
+            titles.append(title_tag.text.strip())
+    return pd.DataFrame({'title': titles})
 
-                                                        # 3. 버튼 클릭 시 뉴스 수집
-                                                        if st.button("트렌드 뉴스 수집"):
-                                                            news_df = collect_news_data(keyword, count=num_articles)
-                                                                st.subheader("수집된 뉴스 제목")
-                                                                    st.dataframe(news_df)
+# 3. 버튼 클릭 시 뉴스 수집
+if st.button("트렌드 뉴스 수집"):
+    news_df = collect_news_data(keyword, count=num_articles)
+    st.subheader("수집된 뉴스 제목")
+    st.dataframe(news_df)
 
-                                                                        # 4. 키워드 분석
-                                                                            all_text = " ".join(news_df['title'])
-                                                                                tokens = word_tokenize(all_text)
-                                                                                    tokens = [w for w in tokens if w.isalpha() and len(w) > 1]
-                                                                                        stop_words = set(stopwords.words('korean'))
-                                                                                            filtered = [w for w in tokens if w not in stop_words]
-                                                                                                word_freq = Counter(filtered)
+    # 4. 키워드 분석
+    all_text = " ".join(news_df['title'])
+    tokens = word_tokenize(all_text)
+    tokens = [w for w in tokens if w.isalpha() and len(w) > 1]
+    stop_words = set(stopwords.words('korean'))
+    filtered = [w for w in tokens if w not in stop_words]
+    word_freq = Counter(filtered)
 
-                                                                                                    # 5. 시각화
-                                                                                                        st.subheader("키워드 빈도 상위 10개")
-                                                                                                            freq_df = pd.DataFrame(word_freq.most_common(10), columns=['단어', '빈도'])
-                                                                                                                st.bar_chart(freq_df.set_index('단어'))
+    # 5. 시각화
+    st.subheader("키워드 빈도 상위 10개")
+    freq_df = pd.DataFrame(word_freq.most_common(10), columns=['단어', '빈도'])
+    st.bar_chart(freq_df.set_index('단어'))
 
-                                                                                                                    st.subheader("워드클라우드")
-                                                                                                                        wc = WordCloud(font_path='NanumGothic.ttf', background_color='white', width=800, height=400)
-                                                                                                                            wc_img = wc.generate_from_frequencies(word_freq)
+    st.subheader("워드클라우드")
+    wc = WordCloud(font_path='NanumGothic.ttf', background_color='white', width=800, height=400)
+    wc_img = wc.generate_from_frequencies(word_freq)
 
-                                                                                                                                st.image(wc_img.to_array(), use_column_width=True)
+    st.image(wc_img.to_array(), use_column_width=True)
