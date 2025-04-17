@@ -7,13 +7,22 @@ from bs4 import BeautifulSoup
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+import os
+
 from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
-# 다운로드 (최초 1회)
-nltk.download('punkt')
-nltk.download('stopwords')
+# 안전 다운로드
+def safe_nltk_download(resource):
+    from nltk.data import find
+    try:
+        find(resource)
+    except LookupError:
+        nltk.download(resource)
+
+safe_nltk_download('punkt')
+safe_nltk_download('stopwords')
 
 st.set_page_config(page_title="Trend Insight Dashboard (EN)", layout="wide")
 
