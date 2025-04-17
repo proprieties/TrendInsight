@@ -3,6 +3,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+beautifulsoup4
 from bs4 import BeautifulSoup
 import nltk
 from nltk.corpus import stopwords
