@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from collections import Counter
 
-# 안전하게 stopwords 다운로드
+# 
 import nltk
 def safe_nltk_download(resource):
     from nltk.data import find
@@ -22,7 +22,7 @@ st.title("Trend Insight: English News Keyword Analyzer")
 keyword = st.text_input("Enter search keyword (e.g., AI marketing)", "AI marketing")
 num_articles = st.slider("Number of articles", 5, 50, 10)
 
-# 뉴스 크롤링 함수
+# 
 def fetch_news(keyword, num=10):
     headers = {"User-Agent": "Mozilla/5.0"}
     query = '+'.join(keyword.split())
@@ -40,7 +40,7 @@ if keyword:
     for title in news_df['title']:
         st.write("-", title)
 
-    # 텍스트 분석
+    #
     all_text = " ".join(news_df['title'])
     tokens = all_text.split()
     tokens = [w.lower() for w in tokens if w.isalpha() and len(w) > 2]
@@ -48,7 +48,7 @@ if keyword:
 
     word_freq = Counter(filtered)
 
-    # 시각화: WordCloud
+    # WordCloud
     st.subheader("Word Cloud")
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freq)
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -56,7 +56,7 @@ if keyword:
     ax.axis("off")
     st.pyplot(fig)
 
-    # 시각화: 상위 키워드
+    # 
     st.subheader("Top Keywords")
     top_words = word_freq.most_common(10)
     top_df = pd.DataFrame(top_words, columns=["Word", "Frequency"])
