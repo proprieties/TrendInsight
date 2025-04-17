@@ -1,74 +1,63 @@
-# streamlit_trend_insight_en.py
-
 import streamlit as st
-import pandas as pd
 import requests
-from bs4 import BeautifulSoup
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-import os
-
-from collections import Counter
-from wordcloud import WordCloud
+import pandas as pd
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from bs4 import BeautifulSoup
+from nltk.corpus import stopwords
+from collections import Counter
 
-# 안전 다운로드
+# 안전하게 stopwords 다운로드
+import nltk
 def safe_nltk_download(resource):
     from nltk.data import find
     try:
         find(resource)
     except LookupError:
         nltk.download(resource)
-
-safe_nltk_download('punkt')
 safe_nltk_download('stopwords')
 
-st.set_page_config(page_title="Trend Insight Dashboard (EN)", layout="wide")
-
+# UI
 st.title("Trend Insight: English News Keyword Analyzer")
-st.markdown("Search the latest news based on a keyword and visualize keyword frequency + word cloud.")
-
-# 1. Keyword Input
 keyword = st.text_input("Enter search keyword (e.g., AI marketing)", "AI marketing")
 num_articles = st.slider("Number of articles", 5, 50, 10)
 
-# 2. Google News Scraper (EN)
-@st.cache_data
-def collect_news(query, count):
-    base_url = f"https://news.google.com/search?q={query}&hl=en&gl=US&ceid=US:en"
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(base_url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
+# 뉴스 크롤링 함수
+def fetch_news(keyword, num=10):
+    headers = {"User-Agent": "Mozilla/5.0"}
+    query = '+'.join(keyword.split())
+    url = f"https://news.google.com/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+    res = requests.get(url, headers=headers)
+    soup = BeautifulSoup(res.text, 'html.parser')
+    articles = soup.find_all("a", class_="DY5T1d RZIKme", limit=num)
+    return [{"title": a.text.strip()} for a in articles]
 
-    titles = []
-    for article in soup.select('article')[:count]:
-        a_tag = article.find('a')
-        if a_tag:
-            titles.append(a_tag.text.strip())
-    return pd.DataFrame({'title': titles})
-
-# 3. Start Button
-if st.button("Fetch News & Analyze"):
-    news_df = collect_news(keyword, num_articles)
+if keyword:
+    news_data = fetch_news(keyword, num_articles)
+    news_df = pd.DataFrame(news_data)
 
     st.subheader("Fetched News Titles")
-    st.dataframe(news_df)
+    for title in news_df['title']:
+        st.write("-", title)
 
+    # 텍스트 분석
     all_text = " ".join(news_df['title'])
-    tokens = word_tokenize(all_text)
+    tokens = all_text.split()
     tokens = [w.lower() for w in tokens if w.isalpha() and len(w) > 2]
     filtered = [w for w in tokens if w not in stopwords.words('english')]
 
     word_freq = Counter(filtered)
 
-    # 4. Keyword Frequency Bar Chart
-    st.subheader("Top 10 Frequent Keywords")
-    freq_df = pd.DataFrame(word_freq.most_common(10), columns=['Keyword', 'Frequency'])
-    st.bar_chart(freq_df.set_index('Keyword'))
-
-    # 5. WordCloud
+    # 시각화: WordCloud
     st.subheader("Word Cloud")
-    wc = WordCloud(background_color='white', width=800, height=400)
-    wc_img = wc.generate_from_frequencies(word_freq)
-    st.image(wc_img.to_array(), use_column_width=True)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freq)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis("off")
+    st.pyplot(fig)
+
+    # 시각화: 상위 키워드
+    st.subheader("Top Keywords")
+    top_words = word_freq.most_common(10)
+    top_df = pd.DataFrame(top_words, columns=["Word", "Frequency"])
+    st.bar_chart(top_df.set_index("Word"))
