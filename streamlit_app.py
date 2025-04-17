@@ -1,7 +1,7 @@
 # streamlit_trend_insight_app.py
 
 # 예시: 나눔고딕 설치
-!apt-get install -y fonts-nanum
+# !apt-get install -y fonts-nanum
 
 import streamlit as st
 import pandas as pd
